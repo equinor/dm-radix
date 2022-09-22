@@ -1,0 +1,32 @@
+on:
+  workflow_dispatch:
+  workflow_call:  # Workflow is meant to be called from another workflow, with the image tag as input
+    inputs:
+      image-tag:
+        description: 'Which tag to set for the produced docker images'
+        default: 'latest'
+        required: true
+        type: string
+    secrets:
+      ACR_SECRET:
+        required: false
+
+
+env:
+  IMAGE_REGISTRY: datamodelingtool.azurecr.io
+  REGISTRY_USER: datamodelingtool
+  NGINX_IMAGE: datamodelingtool.azurecr.io/dmt/nginx
+
+jobs:
+  build-and-publish-nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: "Build and Publish nginx"
+        run: |
+          echo "Tagging with ${{ inputs.image-tag }}"
+          docker login -u $REGISTRY_USER -p ${{ secrets.ACR_SECRET }} $IMAGE_REGISTRY
+          docker pull $NGINX_IMAGE
+          docker build --cache-from $NGINX_IMAGE --tag $NGINX_IMAGE ./nginx
+          docker tag $NGINX_IMAGE $NGINX_IMAGE:${{ inputs.image-tag }}
+          docker push $NGINX_IMAGE:${{ inputs.image-tag }}
