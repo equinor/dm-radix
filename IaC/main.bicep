@@ -18,20 +18,20 @@ resource jobStore 'Microsoft.Cache/redis@2021-06-01' = {
   }
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts@2021-10-15'= {
+resource database 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: 'dmt-db-${environment}'
   location: location
-  tags:{
+  tags: {
     defaultExperience: 'MongoDB'
   }
   kind: 'MongoDB'
   properties: {
-    capacity:{
+    capacity: {
       totalThroughputLimit: -1
     }
     // autoScale may only be set per database, not databaseAccount :(
     databaseAccountOfferType: 'Standard'
-    apiProperties:{
+    apiProperties: {
       serverVersion: '4.0'
     }
     locations: [
@@ -41,5 +41,12 @@ resource database 'Microsoft.DocumentDB/databaseAccounts@2021-10-15'= {
         locationName: location
       }
     ]
+    publicNetworkAccess: 'Enabled'
+    ipRules: [
+      // Allow radix egress IP's only. Found here: https://console.radix.equinor.com/about
+      { ipAddressOrRange: '52.178.214.0/24' }
+    ]
+
   }
+
 }
