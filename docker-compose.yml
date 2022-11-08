@@ -5,12 +5,12 @@ services:
     restart: unless-stopped
     build:
       context: ./nginx
-    image: datamodelingtool.azurecr.io/dmt/nginx
+#    image: datamodelingtool.azurecr.io/dmt/nginx
     ports:
       - "80:8080"
     links:
-      - web
-#      - dm-job
+      - dmt
+      - dm-job
 
   dmss:
     image: datamodelingtool.azurecr.io/dmss:latest
@@ -20,6 +20,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: maf
       MONGO_INITDB_ROOT_PASSWORD: maf
       SECRET_KEY: sg9aeUM5i1JO4gNN8fQadokJa3_gXQMLBjSGGYcfscs= # Don't reuse this in production...
+    ports:
+      - "5000:5000"
     depends_on:
       - db
 
@@ -30,44 +32,59 @@ services:
       MONGO_INITDB_ROOT_USERNAME: maf
       MONGO_INITDB_ROOT_PASSWORD: maf
     volumes:
-      - ./data/db:/data/db
+      - ./dmss-data/db:/data/db
 
-# TODO: Merge "no_home_in_api" before this can be enabled
-#  dm-job:
-#    image: datamodelingtool.azurecr.io/dmt/api:production
-#    restart: unless-stopped
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock # Needed to start docker jobs
-#    environment:
-#      API_DEBUG: 1
-#      ENVIRONMENT: local
-#      LOGGING_LEVEL: INFO
-#      JOB_SERVICE_ENABLED: 1
-#      AZURE_JOB_SUBSCRIPTION: 14d57366-b2ae-4da8-8b75-e273c6fdabe2
-#      AZURE_JOB_RESOURCE_GROUP: dmt-test-containers
-#      AZURE_SP_SECRET: ${AZURE_SP_SECRET}
-#      AZURE_JOB_TENANT_ID: 3aa4a235-b6e2-48d5-9195-7fcf05b459b0
-#      AZURE_JOB_CLIENT_ID: 97a6b5bd-63fb-42c6-bb75-7e5de2394ba0
-#      SCHEDULER_ENVS_TO_EXPORT: "PUBLIC_DMSS_API,SIMA_LICENSE"
-#      SCHEDULER_REDIS_HOST: job-store
-#      SCHEDULER_REDIS_PORT: 6379
-#      SCHEDULER_REDIS_SSL: "false"
-#      MONGO_INITDB_ROOT_USERNAME: maf
-#      MONGO_INITDB_ROOT_PASSWORD: maf
-#      APPLICATION_HOME: /code/src/home
-#      DMSS_API: http://dmss:5000
-#      #SIMA_LICENSE: |
-#    depends_on:
-#      - job-store
-#    ports:
-#      - "5000:5000"
+  db-ui:
+    image: mongo-express:1.0.0-alpha
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: db
+      ME_CONFIG_MONGODB_ADMINUSERNAME: maf
+      ME_CONFIG_MONGODB_ADMINPASSWORD: maf
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
 
-  web:
-    image: datamodelingtool.azurecr.io/dmt/web
-    build: web
+  dm-job:
+    image: datamodelingtool.azurecr.io/dm-job:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Needed to start docker jobs
+    environment:
+      API_DEBUG: 1
+      ENVIRONMENT: local
+      LOGGING_LEVEL: INFO
+      JOB_SERVICE_ENABLED: 1
+      AZURE_JOB_SUBSCRIPTION: 14d57366-b2ae-4da8-8b75-e273c6fdabe2
+      AZURE_JOB_RESOURCE_GROUP: dmt-test-containers
+      AZURE_SP_SECRET: ${AZURE_SP_SECRET}
+      AZURE_JOB_TENANT_ID: 3aa4a235-b6e2-48d5-9195-7fcf05b459b0
+      AZURE_JOB_CLIENT_ID: 97a6b5bd-63fb-42c6-bb75-7e5de2394ba0
+      SCHEDULER_ENVS_TO_EXPORT: "PUBLIC_DMSS_API,SIMA_LICENSE"
+      SCHEDULER_REDIS_HOST: job-store
+      SCHEDULER_REDIS_PORT: 6379
+      SCHEDULER_REDIS_SSL: "false"
+      MONGO_INITDB_ROOT_USERNAME: maf
+      MONGO_INITDB_ROOT_PASSWORD: maf
+      DMSS_API: http://dmss:5000
+      #SIMA_LICENSE: |
+    depends_on:
+      - job-store
+    ports:
+      - "5001:5000"
+
+  dmt:
+    image: datamodelingtool.azurecr.io/dmt/web-eq:latest
+    build: dmt
     restart: unless-stopped
     ports:
       - "3000:3000"
+
+#  analysis-portal:
+#    image: datamodelingtool.azurecr.io/dmt/web
+#    restart: unless-stopped
+#    ports:
+#      - "3001:3000"
 
   job-store:
     image: redis:6.2.5-alpine
