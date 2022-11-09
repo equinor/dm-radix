@@ -1,7 +1,7 @@
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
 metadata:
-  name: data-modelling-tool
+  name: development-framework
 spec:
   environments:
     - name: prod
@@ -9,10 +9,10 @@ spec:
         from: master
     - name: dev
       build:
-        from: master
+        from: radix-test
   components:
     - name: dmt
-      image: datamodelingtool.azurecr.io/dmt/web:{imageTagName}
+      image: datamodelingtool.azurecr.io/dmt/dmt:{imageTagName}
       alwaysPullImageOnDeploy: true
       resources:
         requests:
@@ -60,12 +60,12 @@ spec:
           imageTagName: production
           variables:
             SCHEDULER_REDIS_HOST: dmt-jobStore-prod.redis.cache.windows.net
-            PUBLIC_DMSS_API: https://dmss-data-modelling-tool-prod.radix.equinor.com
+            PUBLIC_DMSS_API: https://dmss-development-framework-prod.radix.equinor.com
         - environment: dev
           imageTagName: latest
           variables:
             SCHEDULER_REDIS_HOST: dmt-jobStore-test.redis.cache.windows.net
-            PUBLIC_DMSS_API: https://dmss-data-modelling-tool-dev.radix.equinor.com
+            PUBLIC_DMSS_API: https://dmss-development-framework-dev.radix.equinor.com
       ports:
         - name: job
           port: 5000
@@ -120,7 +120,7 @@ spec:
           imageTagName: production
         - environment: dev
           imageTagName: latest
-      image: datamodelingtool.azurecr.io/dmt/nginx:{imageTagName}
+      image: datamodelingtool.azurecr.io/dmt/dm-nginx:{imageTagName}
       ports:
         - name: nginx
           port: 8080

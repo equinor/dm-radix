@@ -1,12 +1,20 @@
 on:
   workflow_dispatch:
   push:
-    tags:
-      - v*
+    branches:
+      - radix-test
 
 jobs:
+  publish-latest:
+    uses: ./.github/workflows/publish.yaml
+    with:
+      image-tag: latest
+      oauth-redirect-url: https://development-framework.app.radix.equinor.com
+    secrets:
+      ACR_SECRET: ${{ secrets.ACR_SECRET }}
+
   deploy:
-    needs: publish-prod-tag
+    needs: publish-latest
     uses: ./.github/workflows/deploy.yaml
     with:
       radix-environment: 'prod'

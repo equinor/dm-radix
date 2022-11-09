@@ -2,9 +2,17 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - radix-test
 
 jobs:
+  publish-latest:
+    uses: ./.github/workflows/publish.yaml
+    with:
+      image-tag: latest
+      oauth-redirect-url: https://proxy-development-framework-dev.radix.equinor.com
+    secrets:
+      ACR_SECRET: ${{ secrets.ACR_SECRET }}
+
   deploy:
     needs: publish-latest
     uses: ./.github/workflows/deploy.yaml
